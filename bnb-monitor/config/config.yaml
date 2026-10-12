@@ -1,0 +1,148 @@
+# Configurazione del Monitor prezzi BnB Trieste.
+# Tutto ciò che si regola senza toccare il codice sta qui.
+# Segreti (password database, token Telegram) stanno nel file .env.
+
+timezone: Europe/Rome
+
+# Il BnB monitorato.
+own_property:
+  name: "Elegante appartamento in Marina"
+  share_url: "https://www.booking.com/Share-f5lhGq"
+  # Identificativo Booking (percorso della pagina, es. "it/elegante-appartamento-in-marina").
+  # Se vuoto viene ricavato dal link di condivisione alla prima esecuzione
+  # (oppure con: python -m bnbmonitor resolve-own).
+  booking_id: ""
+  # Posizione approssimativa di Via Economo; sostituita dalle coordinate
+  # lette dalla pagina Booking quando disponibili.
+  lat: 45.6440
+  lon: 13.7612
+
+# Profili di ricerca: aggiungere un profilo = aggiungere un blocco.
+# near_days: fino a questo numero di giorni si controlla ogni notte;
+# far_every_days: oltre, ogni data di check-in si controlla ogni N notti.
+profiles:
+  principale:
+    label: "2 notti, 2 adulti"
+    nights: 2
+    adults: 2
+    horizon_days: 90
+    near_days: 30
+    far_every_days: 3
+  notte_singola:
+    label: "1 notte, 2 adulti"
+    nights: 1
+    adults: 2
+    horizon_days: 60
+    near_days: 30
+    far_every_days: 3
+
+# Profili usati per le metriche "differenza 1 notte / 2 notti" e
+# "quota con soggiorno minimo 2 notti".
+metrics:
+  primary_profile: principale
+  single_night_profile: notte_singola
+  # Soglie per il riepilogo mattutino.
+  availability_drop_points: 15     # calo della disponibilità in 7 giorni (punti %)
+  median_move_pct: 10              # variazione mediana in 7 giorni (%)
+  summary_max_dates: 8             # date elencate per voce
+
+# Zona centro (poligono disegnato su geojson.io).
+geo:
+  polygon_file: centro.geojson
+  # Punto di partenza della ricerca; se vuoto si usa il baricentro del poligono.
+  search_lat: null
+  search_lon: null
+  # Raggio di arresto in metri; se vuoto: distanza del vertice più lontano + margine.
+  stop_radius_m: null
+  stop_margin_m: 250
+
+booking:
+  base_url: "https://www.booking.com/searchresults.it.html"
+  # Parametri aggiunti a ogni ricerca (da verificare durante lo sviluppo).
+  extra_params:
+    ss: "Trieste"
+    dest_type: "latlong"
+    order: "distance_from_search"
+    selected_currency: "EUR"
+    lang: "it"
+    no_rooms: 1
+    group_children: 0
+  page_size: 25
+  max_pages: 8
+  # Convenzione sui prezzi: true = totale comprensivo di tasse e costi
+  # (si aggiungono le tasse mostrate a parte "+ € X tasse e costi").
+  price_include_taxes: true
+  # Schede nuove aperte al massimo per esecuzione (le altre la notte dopo).
+  max_new_details_per_run: 60
+  # Pagine HTML salvate per il debug dei selettori (ultime N esecuzioni).
+  debug_keep_runs: 5
+
+# Prudenza.
+politeness:
+  page_pause_s: [4, 9]         # pausa casuale tra pagine
+  search_pause_s: [6, 15]      # pausa casuale tra ricerche
+  detail_pause_s: [5, 11]      # pausa casuale tra schede strutture
+  page_timeout_s: 45
+  max_run_minutes: 180
+
+# Pianificazione (ora locale).
+schedule:
+  run_window_start: "01:30"
+  run_window_minutes: 120        # partenza casuale entro questa finestra
+  summary_time: "07:30"
+
+# Controllo qualità.
+quality:
+  history_runs: 7                # esecuzioni valide di confronto
+  drop_threshold: 0.5            # sospetta se risultati/ricerca < 50% della mediana
+  min_price_read_ratio: 0.8      # sospetta se meno dell'80% dei prezzi è leggibile
+  max_incomplete_ratio: 0.2      # sospetta se oltre il 20% delle ricerche è incompleto
+  inactive_after_days: 30
+
+# Classificazione delle strutture in segmenti:
+#   apartment  = appartamenti interi (concorrenza diretta)
+#   room_extra = camere extra-alberghiere (B&B, affittacamere, guest house)
+#   room_hotel = camere in hotel
+#   other      = escluse (ostelli, campeggi, ...)
+# Codici tipologia Booking (ht_id) -> segmento. Da verificare.
+classification:
+  type_ids:
+    201: apartment    # Appartamenti
+    220: apartment    # Case vacanze
+    213: apartment    # Ville
+    204: room_hotel   # Hotel
+    205: room_hotel   # Motel
+    206: room_hotel   # Resort
+    219: room_hotel   # Aparthotel
+    208: room_extra   # B&B
+    216: room_extra   # Guest house / affittacamere
+    222: room_extra   # Soggiorni in famiglia
+    203: other        # Ostelli
+    214: other        # Campeggi
+  # Parole chiave (minuscole) cercate nella tipologia letta, in ordine.
+  keywords:
+    - [aparthotel, room_hotel]
+    - [ostello, other]
+    - [hostel, other]
+    - [campeggio, other]
+    - ["b&b", room_extra]
+    - [bed and breakfast, room_extra]
+    - [affittacamere, room_extra]
+    - [guest house, room_extra]
+    - [pensione, room_extra]
+    - [locanda, room_extra]
+    - [soggiorno in famiglia, room_extra]
+    - [hotel, room_hotel]
+    - [albergo, room_hotel]
+    - [appartament, apartment]
+    - [apartment, apartment]
+    - [monolocale, apartment]
+    - [casa vacanze, apartment]
+    - [loft, apartment]
+    - [attico, apartment]
+    - [villa, apartment]
+  # Correzioni manuali: booking_id -> segmento.
+  overrides: {}
+
+backup:
+  keep: 14                       # esportazioni conservate

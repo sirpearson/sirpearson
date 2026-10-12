@@ -1,0 +1,54 @@
+# Monitor prezzi BnB Trieste: database, raccolta notturna, dashboard.
+# Avvio: docker compose up -d   (dalla cartella del progetto)
+name: bnb-monitor
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bnb}
+      POSTGRES_USER: ${POSTGRES_USER:-bnb}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?imposta POSTGRES_PASSWORD nel file .env}
+      TZ: Europe/Rome
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  scraper:
+    build: .
+    image: bnb-monitor:latest
+    restart: unless-stopped
+    command: ["python", "-m", "bnbmonitor", "scheduler"]
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/data
+    shm_size: "1gb"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  dashboard:
+    image: bnb-monitor:latest
+    restart: unless-stopped
+    command: ["streamlit", "run", "dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0",
+              "--server.headless=true", "--browser.gatherUsageStats=false"]
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+    volumes:
+      - ./config:/app/config:ro
+    ports:
+      - "${DASHBOARD_PORT:-8501}:8501"
+    depends_on:
+      db:
+        condition: service_healthy
+      scraper:
+        condition: service_started

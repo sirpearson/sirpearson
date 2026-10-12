@@ -1,0 +1,36 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Zona centro Trieste",
+        "note": "PROVVISORIO: tracciato approssimativo. Ridisegnare su geojson.io seguendo Rive, Piazza Libertà, Piazza Oberdan, Via Carducci, Piazza Goldoni, Corso Italia, Piazza Unità, Cavana, Via Torino, Piazza Venezia, Via Lazzaretto Vecchio, Via Economo e sostituire questo file."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [13.7700, 45.6570],
+            [13.7722, 45.6567],
+            [13.7770, 45.6525],
+            [13.7785, 45.6505],
+            [13.7788, 45.6487],
+            [13.7718, 45.6497],
+            [13.7682, 45.6496],
+            [13.7668, 45.6478],
+            [13.7652, 45.6463],
+            [13.7628, 45.6456],
+            [13.7626, 45.6440],
+            [13.7608, 45.6434],
+            [13.7594, 45.6448],
+            [13.7630, 45.6474],
+            [13.7660, 45.6505],
+            [13.7680, 45.6532],
+            [13.7700, 45.6570]
+          ]
+        ]
+      }
+    }
+  ]
+}
